@@ -3,23 +3,26 @@
 ## Technology Decisions
 
 ### Backend
-- **Language**: PHP (version 8.0+)
-- **Framework**: TBD - Options:
-  - Laravel (full-featured, extensive ecosystem)
-  - Slim Framework (lightweight, microframework)
-  - Vanilla PHP (simplest for file-based operations)
+- **Language**: PHP (version 8.2)
+- **Framework**: Laravel (latest version)
+  - Full-featured framework with excellent ecosystem
+  - Built-in routing, middleware, validation
+  - Eloquent ORM (though using file-based storage)
+  - Easy API development with API resources
 - **MIDI Parsing**: php-midi-parser library or equivalent
-- **File Operations**: Native PHP functions for JSON and file management
+- **File Operations**: Laravel's Storage facade for file management
 
 ### Frontend
-- **Framework**: TBD - Options:
-  - React (component-based, large ecosystem)
-  - Vue.js (progressive, easier learning curve)
-  - Vanilla JavaScript (lightweight, no build step)
-- **MIDI Playback**: Tone.js (recommended for robust timing and MIDI support)
-- **PDF Display**: PDF.js
+- **Framework**: React (latest version)
+  - Component-based architecture
+  - Large ecosystem with extensive libraries
+  - React Router for navigation
+  - State management: React Context API or Zustand
+- **Build Tool**: Vite (fast, modern build tool)
+- **MIDI Playback**: Tone.js (robust timing and MIDI support)
+- **PDF Display**: react-pdf or PDF.js
 - **MusicXML (Phase 3)**: OpenSheetMusicDisplay or Verovio
-- **PWA Support**: Service Workers, Web App Manifest
+- **PWA Support**: Vite PWA plugin for Service Workers
 
 ### Data Storage
 - **Primary**: File-based JSON storage

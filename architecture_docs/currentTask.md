@@ -6,7 +6,8 @@ Set up initial project structure and documentation for ChoirLoop choir practice 
 ## Context
 - Project is a browser-based tool for choir practice with MIDI file support
 - Uses file-based storage (JSON) instead of database
-- Backend: PHP, Frontend: TBD (React/Vue/vanilla JS)
+- **Backend: Laravel (PHP)** - Full-featured framework with API resources
+- **Frontend: React with Vite** - Component-based UI with fast build tooling
 - Key feature: Individual voice control with practice sections and loop functionality
 - Target: Progressive Web App (PWA) for offline use
 
@@ -19,16 +20,23 @@ Set up initial project structure and documentation for ChoirLoop choir practice 
 6. ✅ Created .gitignore for project
 
 ## Next Steps
-1. Choose backend framework (Laravel/Slim/Vanilla PHP)
-2. Choose frontend framework (React/Vue/Vanilla JS)
-3. Create backend/ directory structure
-4. Create frontend/ directory structure
-5. Set up data/ folder structure for song storage
-6. Begin Phase 1 MVP implementation:
-   - MIDI file upload capability
-   - Basic file storage system
-   - MIDI parsing functionality
-   - Basic playback with single voice
+1. Install Laravel in the Docker container
+   - Run `composer create-project laravel/laravel backend` inside container
+   - Configure Laravel for file-based storage
+   - Set up API routes structure
+2. Set up React frontend with Vite
+   - Create frontend/ directory
+   - Initialize Vite React project
+   - Install core dependencies (react-router-dom, tone.js, axios)
+3. Configure CORS between Laravel API and React frontend
+4. Create data/ folder structure for song storage
+5. Begin Phase 1 MVP implementation:
+   - Laravel: File upload API endpoint
+   - Laravel: MIDI parsing service
+   - Laravel: Song management API
+   - React: File upload component
+   - React: Audio player with Tone.js integration
+   - React: Basic playback with single voice control
 
 ## Related Documents
 - Specification: claude.md (German specification in project root)

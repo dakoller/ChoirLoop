@@ -93,14 +93,24 @@ See `architecture_docs/projectRoadmap.md` for the complete development plan.
 - **Codebase Summary:** `architecture_docs/codebaseSummary.md` - Project structure overview
 - **Original Spec:** `claude.md` - German language specification
 
+## Technology Stack
+
+- **Backend**: Laravel (PHP 8.2) - Full-featured framework with API resources
+- **Frontend**: React with Vite - Component-based UI with fast build tooling
+- **MIDI Playback**: Tone.js
+- **Build Tool**: Vite
+- **State Management**: React Context API or Zustand
+
 ## Next Steps
 
-1. Choose backend framework (Laravel/Slim/Vanilla PHP)
-2. Choose frontend framework (React/Vue/Vanilla JS)
-3. Create initial backend structure
+1. Install Laravel and React (see `SETUP.md`)
+2. Create Laravel controllers and API routes
+3. Build React components for UI
 4. Implement MIDI file upload functionality
-5. Implement MIDI parsing
+5. Integrate Tone.js for audio playback
 6. Create basic playback with single voice control
+
+For detailed setup instructions, see **`SETUP.md`**
 
 ## License
 
