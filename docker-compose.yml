@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  php-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: choirloop-php
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount the entire project for development
+      - ./:/var/www/html
+      # Persist uploaded data
+      - ./data:/var/www/html/data
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html/backend/public
+    restart: unless-stopped
+    networks:
+      - choirloop-network
+
+networks:
+  choirloop-network:
+    driver: bridge
