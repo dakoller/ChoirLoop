@@ -2,11 +2,50 @@
     "id": "96af2373-8c76-4abe-be6b-e66a92770fee",
     "title": "Wir sind f\u00fcr dich da",
     "description": "",
-    "midi_file": null,
+    "midi_file": "song.mid",
     "score_file": null,
     "mp3_files": [],
-    "voices": [],
-    "practice_sections": [],
+    "voices": [
+        {
+            "track_number": 0,
+            "name": "Solo",
+            "original_track_name": "Stefan",
+            "note_count": 437,
+            "channel": 1
+        },
+        {
+            "track_number": 1,
+            "name": "Tenor 1",
+            "original_track_name": "Tenor 1 Tenor 2",
+            "note_count": 577,
+            "channel": 2
+        },
+        {
+            "track_number": 2,
+            "name": "Bass 1",
+            "original_track_name": "Bass 1 Bass 2",
+            "note_count": 565,
+            "channel": 3
+        },
+        {
+            "track_number": 3,
+            "name": "Piano",
+            "original_track_name": "Klavier",
+            "note_count": 1914,
+            "channel": 0
+        }
+    ],
+    "practice_sections": [
+        {
+            "id": "355eca6c-565d-4b5e-88ec-5ddd517f4e7d",
+            "label": "test",
+            "start_measure": 94,
+            "start_beat": 1,
+            "end_measure": 99,
+            "end_beat": 4,
+            "created_at": "2025-11-08T12:40:36+00:00"
+        }
+    ],
     "created_at": "2025-11-08T12:32:42+00:00",
-    "updated_at": "2025-11-08T12:32:42+00:00"
+    "updated_at": "2025-11-08T20:27:55+00:00"
 }

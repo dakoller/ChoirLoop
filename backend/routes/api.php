@@ -29,27 +29,15 @@ Route::prefix('songs')->group(function () {
     
     // File upload endpoints
     Route::post('/{id}/upload/midi', [App\Http\Controllers\SongController::class, 'uploadMidi']);
-    Route::post('/{id}/upload/score', [App\Http\Controllers\SongController::class, 'uploadScore']);
-    Route::post('/{id}/upload/mp3', [App\Http\Controllers\SongController::class, 'uploadMp3']);
+    Route::post('/{id}/upload/score', [App\Http\Controllers\SongController::class, 'uploadScore']); // MusicXML
+    
+    // File serving endpoints
+    Route::get('/{id}/midi', [App\Http\Controllers\SongController::class, 'serveMidi']);
+    Route::get('/{id}/score', [App\Http\Controllers\SongController::class, 'serveScore']);
     
     // Practice sections endpoints
-    Route::get('/{id}/sections', function ($id) {
-        // TODO: Implement PracticeSectionController@index
-        return response()->json(['sections' => []]);
-    });
-    
-    Route::post('/{id}/sections', function (Request $request, $id) {
-        // TODO: Implement PracticeSectionController@store
-        return response()->json(['message' => 'Section creation endpoint - to be implemented'], 501);
-    });
-    
-    Route::put('/{id}/sections/{sectionId}', function (Request $request, $id, $sectionId) {
-        // TODO: Implement PracticeSectionController@update
-        return response()->json(['message' => 'Section update endpoint - to be implemented'], 501);
-    });
-    
-    Route::delete('/{id}/sections/{sectionId}', function ($id, $sectionId) {
-        // TODO: Implement PracticeSectionController@destroy
-        return response()->json(['message' => 'Section deletion endpoint - to be implemented'], 501);
-    });
+    Route::get('/{id}/sections', [App\Http\Controllers\PracticeSectionController::class, 'index']);
+    Route::post('/{id}/sections', [App\Http\Controllers\PracticeSectionController::class, 'store']);
+    Route::put('/{id}/sections/{sectionId}', [App\Http\Controllers\PracticeSectionController::class, 'update']);
+    Route::delete('/{id}/sections/{sectionId}', [App\Http\Controllers\PracticeSectionController::class, 'destroy']);
 });

@@ -6,12 +6,12 @@ A browser-based practice tool for choirs that allows choir members to practice s
 ## High-Level Goals
 
 ### Phase 1: MVP (Minimum Viable Product)
-- [ ] MIDI file upload and parsing
-- [ ] Basic playback of individual voices
-- [ ] Simple volume control per track
-- [ ] Manual definition of start/end measures
-- [ ] Loop function (endless)
-- [ ] File-based storage system (JSON)
+- [x] MIDI file upload and parsing
+- [x] Basic playback of individual voices (framework ready with Tone.js)
+- [x] Simple volume control per track (basic implementation)
+- [x] Manual definition of start/end measures (practice sections)
+- [ ] Loop function (endless) - Player framework ready
+- [x] File-based storage system (JSON)
 
 ### Phase 2: Core Features
 - [ ] Admin interface for defining practice sections
@@ -50,7 +50,22 @@ A browser-based practice tool for choirs that allows choir members to practice s
 - [ ] Compatible with Chrome, Firefox, Safari (desktop and mobile)
 
 ## Completed Tasks
-<!-- Tasks will be marked here as they are completed -->
+
+### 2025-01-08 - Phase 1 MVP Foundation Complete
+- ✅ Docker development environment setup
+- ✅ Laravel backend API fully implemented
+  - SongController with CRUD operations
+  - PracticeSectionController with full management
+  - File upload endpoints (MIDI, PDF, MP3)
+  - File-based JSON storage system
+- ✅ React frontend with Vite
+  - SongList component with list and detail views
+  - FileUpload component for all file types
+  - PracticeSections component for section management
+  - AudioPlayer component with Tone.js integration (basic)
+- ✅ Full backend-frontend integration working
+- ✅ CORS configured and tested
+- ✅ All API endpoints tested and operational
 
 ## Future Considerations
 - Nextcloud integration for cloud-based MIDI file access
