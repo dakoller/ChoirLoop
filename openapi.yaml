@@ -1,0 +1,700 @@
+openapi: 3.0.3
+info:
+  title: ChoirLoop API
+  description: |
+    API for ChoirLoop - A browser-based choir practice tool that allows choir members 
+    to practice specific sections from MIDI files with individual voice control.
+  version: 1.0.0
+  contact:
+    name: ChoirLoop Support
+    url: https://choirloop.rosakehlchen.de
+
+servers:
+  - url: https://choirloop.rosakehlchen.de/api
+    description: Production server
+  - url: http://localhost:8080/api
+    description: Local development server
+
+tags:
+  - name: health
+    description: Health check endpoints
+  - name: songs
+    description: Song management operations
+  - name: files
+    description: File upload and retrieval
+  - name: sections
+    description: Practice section management
+
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Health check
+      description: Check if the API is running and accessible
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: ChoirLoop API is running
+
+  /songs:
+    get:
+      tags:
+        - songs
+      summary: List all songs
+      description: Retrieve a list of all available songs
+      responses:
+        '200':
+          description: List of songs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  songs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SongSummary'
+    
+    post:
+      tags:
+        - songs
+      summary: Create a new song
+      description: Create a new song entry (without files)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  example: "Ave Maria"
+                description:
+                  type: string
+                  example: "Choir practice for Sunday service"
+      responses:
+        '201':
+          description: Song created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  song:
+                    $ref: '#/components/schemas/Song'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /songs/{id}:
+    get:
+      tags:
+        - songs
+      summary: Get song details
+      description: Retrieve detailed information about a specific song
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      responses:
+        '200':
+          description: Song details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  song:
+                    $ref: '#/components/schemas/Song'
+        '404':
+          description: Song not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    put:
+      tags:
+        - songs
+      summary: Update song
+      description: Update song metadata
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Song updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  song:
+                    $ref: '#/components/schemas/Song'
+        '404':
+          description: Song not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - songs
+      summary: Delete song
+      description: Delete a song and all its associated files
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      responses:
+        '200':
+          description: Song deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Song deleted successfully
+        '404':
+          description: Song not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /songs/{id}/upload/midi:
+    post:
+      tags:
+        - files
+      summary: Upload MIDI file
+      description: Upload a MIDI file for a song
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - midi_file
+              properties:
+                midi_file:
+                  type: string
+                  format: binary
+                  description: MIDI file (.mid or .midi)
+      responses:
+        '200':
+          description: MIDI file uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: MIDI file uploaded successfully
+                  midi_file:
+                    type: string
+                    example: song.mid
+        '400':
+          description: Invalid file or missing file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /songs/{id}/upload/score:
+    post:
+      tags:
+        - files
+      summary: Upload score file
+      description: Upload a MusicXML score file for a song
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - score_file
+              properties:
+                score_file:
+                  type: string
+                  format: binary
+                  description: MusicXML file (.xml or .mxl)
+      responses:
+        '200':
+          description: Score file uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Score file uploaded successfully
+                  score_file:
+                    type: string
+                    example: score.xml
+        '400':
+          description: Invalid file or missing file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /songs/{id}/midi:
+    get:
+      tags:
+        - files
+      summary: Download MIDI file
+      description: Retrieve the MIDI file for a song
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      responses:
+        '200':
+          description: MIDI file
+          content:
+            audio/midi:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: MIDI file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /songs/{id}/score:
+    get:
+      tags:
+        - files
+      summary: Download score file
+      description: Retrieve the MusicXML score file for a song
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      responses:
+        '200':
+          description: Score file
+          content:
+            application/xml:
+              schema:
+                type: string
+                format: binary
+            application/vnd.recordare.musicxml:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Score file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /songs/{id}/sections:
+    get:
+      tags:
+        - sections
+      summary: List practice sections
+      description: Get all practice sections for a song
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      responses:
+        '200':
+          description: Practice sections retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PracticeSection'
+        '404':
+          description: Song not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      tags:
+        - sections
+      summary: Create practice section
+      description: Create a new practice section for a song
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - label
+                - start_measure
+                - start_beat
+                - end_measure
+                - end_beat
+              properties:
+                label:
+                  type: string
+                  example: "Chorus"
+                start_measure:
+                  type: integer
+                  minimum: 1
+                  example: 5
+                start_beat:
+                  type: integer
+                  minimum: 1
+                  example: 1
+                end_measure:
+                  type: integer
+                  minimum: 1
+                  example: 12
+                end_beat:
+                  type: integer
+                  minimum: 1
+                  example: 4
+      responses:
+        '201':
+          description: Practice section created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  section:
+                    $ref: '#/components/schemas/PracticeSection'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /songs/{id}/sections/{sectionId}:
+    put:
+      tags:
+        - sections
+      summary: Update practice section
+      description: Update an existing practice section
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+        - $ref: '#/components/parameters/SectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                start_measure:
+                  type: integer
+                  minimum: 1
+                start_beat:
+                  type: integer
+                  minimum: 1
+                end_measure:
+                  type: integer
+                  minimum: 1
+                end_beat:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Practice section updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  section:
+                    $ref: '#/components/schemas/PracticeSection'
+        '404':
+          description: Section or song not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      tags:
+        - sections
+      summary: Delete practice section
+      description: Delete a practice section
+      parameters:
+        - $ref: '#/components/parameters/SongId'
+        - $ref: '#/components/parameters/SectionId'
+      responses:
+        '200':
+          description: Practice section deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Section deleted successfully
+        '404':
+          description: Section or song not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  parameters:
+    SongId:
+      name: id
+      in: path
+      required: true
+      description: Unique identifier of the song (UUID)
+      schema:
+        type: string
+        format: uuid
+        example: "ecb12847-edae-4c3e-b743-d4337c63cb5b"
+    
+    SectionId:
+      name: sectionId
+      in: path
+      required: true
+      description: Unique identifier of the practice section (UUID)
+      schema:
+        type: string
+        format: uuid
+        example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+  schemas:
+    SongSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "ecb12847-edae-4c3e-b743-d4337c63cb5b"
+        title:
+          type: string
+          example: "Ave Maria"
+        description:
+          type: string
+          example: "Practice for Sunday service"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-11-08T22:20:28+00:00"
+    
+    Song:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "ecb12847-edae-4c3e-b743-d4337c63cb5b"
+        title:
+          type: string
+          example: "Ave Maria"
+        description:
+          type: string
+          example: "Practice for Sunday service"
+        midi_file:
+          type: string
+          nullable: true
+          example: "song.mid"
+        score_file:
+          type: string
+          nullable: true
+          example: "score.xml"
+        voices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Voice'
+        practice_sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/PracticeSection'
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-08T20:00:00+00:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-11-08T22:20:28+00:00"
+    
+    Voice:
+      type: object
+      properties:
+        track_number:
+          type: integer
+          description: MIDI track number (0-indexed)
+          example: 0
+        name:
+          type: string
+          description: Voice name (e.g., Soprano, Alto, Tenor, Bass)
+          example: "Soprano 1"
+        channel:
+          type: integer
+          nullable: true
+          description: MIDI channel number
+          example: 1
+        note_count:
+          type: integer
+          description: Number of notes in this track
+          example: 245
+    
+    PracticeSection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        label:
+          type: string
+          description: Human-readable label for the section
+          example: "Chorus"
+        start_measure:
+          type: integer
+          minimum: 1
+          description: Starting measure number
+          example: 5
+        start_beat:
+          type: integer
+          minimum: 1
+          description: Starting beat within the measure
+          example: 1
+        end_measure:
+          type: integer
+          minimum: 1
+          description: Ending measure number
+          example: 12
+        end_beat:
+          type: integer
+          minimum: 1
+          description: Ending beat within the measure
+          example: 4
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-08T20:00:00+00:00"
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Song not found"
+        message:
+          type: string
+          description: Detailed error description
+          example: "The requested song does not exist"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Currently not implemented. Future versions may require authentication.
+
+# Storage Implementation Notes
+x-storage-structure: |
+  ChoirLoop uses file-based JSON storage instead of a database:
+  
+  /data/
+    /songs/
+      /{song-uuid}/
+        - config.json      # Song metadata, voices, practice sections
+        - song.mid         # MIDI file
+        - score.xml        # MusicXML score (optional)
+        - score.mxl        # Compressed MusicXML (optional)
+    /index.json          # Array of all song IDs
+  
+  config.json structure:
+  {
+    "id": "uuid",
+    "title": "string",
+    "description": "string",
+    "midi_file": "song.mid",
+    "score_file": "score.xml",
+    "voices": [
+      {
+        "track_number": 0,
+        "name": "Soprano 1",
+        "channel": 1,
+        "note_count": 245
+      }
+    ],
+    "practice_sections": [
+      {
+        "id": "uuid",
+        "label": "Chorus",
+        "start_measure": 5,
+        "start_beat": 1,
+        "end_measure": 12,
+        "end_beat": 4,
+        "created_at": "ISO8601"
+      }
+    ],
+    "created_at": "ISO8601",
+    "updated_at": "ISO8601"
+  }
+
+x-implementation-notes: |
+  Voice Configuration:
+  - Voices are extracted from MIDI tracks when file is uploaded
+  - Track numbers are 0-indexed
+  - Voice names can be customized by the user
+  - Each voice corresponds to one MIDI track
+  
+  Practice Sections:
+  - Defined by measure and beat ranges
+  - Support looping with count-in
+  - Can overlap or be non-contiguous
+  
+  File Handling:
+  - MIDI files: .mid or .midi extensions
+  - Score files: .xml (MusicXML) or .mxl (compressed MusicXML)
+  - Files stored in song-specific directories using UUIDs
+  - File size limits: Recommended 10MB per file
+  
+  CORS:
+  - Configured to allow frontend domain
+  - Credentials not required for current implementation
+  - May need adjustment for production domains

@@ -1,0 +1,25 @@
+# Docker Compose for Python Backend
+# To use: docker compose -f docker-compose.python.yml up -d
+
+services:
+  python-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: choirloop-python-api
+    ports:
+      - "8001:8000"
+    volumes:
+      # Mount app code for development
+      - ./app:/app/app
+      # Share data directory with host (Laravel backend data)
+      - ../backend/data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - choirloop-network
+
+networks:
+  choirloop-network:
+    driver: bridge
