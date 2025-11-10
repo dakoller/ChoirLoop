@@ -43,7 +43,7 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
     if (songDetails?.voices && songDetails.voices.length > 0) {
       setVoices(songDetails.voices.map(v => ({
         track_number: v.track_number,
-        name: v.name || v.original_track_name || `Track ${v.track_number + 1}`,
+        names: v.names || (v.name ? [v.name] : [`Track ${v.track_number + 1}`]),  // Support both old and new format
         original_track_name: v.original_track_name || `Track ${v.track_number + 1}`,
         note_count: v.note_count || 0,
         channel: v.channel
@@ -54,7 +54,7 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
       // Initialize from MIDI data - expand by default for new configuration
       const initialVoices = midiData.tracks.map((track, index) => ({
         track_number: index,
-        name: track.name || `Track ${index + 1}`,
+        names: [track.name || `Track ${index + 1}`],
         original_track_name: track.name || `Track ${index + 1}`,
         note_count: track.notes.length,
         channel: track.channel
@@ -148,12 +148,20 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
     setPlayingTrack(null);
   };
 
-  const handleVoiceChange = (trackIndex, newVoiceName) => {
-    setVoices(prev => prev.map((voice, idx) => 
-      idx === trackIndex 
-        ? { ...voice, name: newVoiceName }
-        : voice
-    ));
+  const handleVoiceToggle = (trackIndex, voiceName) => {
+    setVoices(prev => prev.map((voice, idx) => {
+      if (idx !== trackIndex) return voice;
+      
+      const currentNames = voice.names || [];
+      const isSelected = currentNames.includes(voiceName);
+      
+      return {
+        ...voice,
+        names: isSelected
+          ? currentNames.filter(n => n !== voiceName)
+          : [...currentNames, voiceName]
+      };
+    }));
   };
 
   const handleSave = async () => {
@@ -195,7 +203,7 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
           <h3 style={{ margin: 0 }}>🎼 Voice Configuration</h3>
           {isConfigured && !isExpanded && (
             <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#666' }}>
-              {voices.length} voices configured: {voices.map(v => v.name).join(', ')}
+              {voices.length} tracks configured
             </p>
           )}
         </div>
@@ -246,28 +254,46 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
                 </div>
               </div>
 
-              {/* Voice Selection */}
+              {/* Voice Selection - Multi-select */}
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
-                  Assign to Voice:
+                  Assign to Voice(s): {voice.names && voice.names.length > 0 && (
+                    <span style={{ fontWeight: 'normal', color: '#007bff' }}>
+                      ({voice.names.join(', ')})
+                    </span>
+                  )}
                 </label>
-                <select
-                  value={voice.name}
-                  onChange={(e) => handleVoiceChange(index, e.target.value)}
-                  style={{ 
-                    width: '100%', 
-                    padding: '6px', 
-                    fontSize: '14px', 
-                    borderRadius: '4px', 
-                    border: '1px solid #ddd' 
-                  }}
-                >
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                  gap: '8px',
+                  padding: '8px',
+                  background: 'white',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                  maxHeight: '120px',
+                  overflow: 'auto'
+                }}>
                   {voiceOptions.map(option => (
-                    <option key={option} value={option}>
+                    <label 
+                      key={option}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        cursor: 'pointer',
+                        fontSize: '13px'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={(voice.names || []).includes(option)}
+                        onChange={() => handleVoiceToggle(index, option)}
+                        style={{ marginRight: '5px' }}
+                      />
                       {option}
-                    </option>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               {/* Play Button */}

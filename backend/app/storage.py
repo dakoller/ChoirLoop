@@ -154,6 +154,8 @@ class StorageService:
             song.title = update_data.title
         if update_data.description is not None:
             song.description = update_data.description
+        if update_data.voices is not None:
+            song.voices = update_data.voices
         
         song.updated_at = datetime.utcnow()
         StorageService.save_song(song)

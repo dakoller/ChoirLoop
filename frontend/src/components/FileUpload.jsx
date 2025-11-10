@@ -15,9 +15,9 @@ function FileUpload({ songId, onUploadComplete }) {
     const endpoint = `/songs/${songId}/upload/${type}`;
     
     if (type === 'midi') {
-      formData.append('midi', file);
+      formData.append('midi_file', file);
     } else if (type === 'score') {
-      formData.append('score', file);
+      formData.append('score_file', file);
     }
 
     try {

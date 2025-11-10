@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 class Voice(BaseModel):
     """Voice/track information from MIDI file"""
     track_number: int = Field(..., description="MIDI track number (0-indexed)")
-    name: str = Field(..., description="Voice name (e.g., Soprano, Alto)")
+    names: List[str] = Field(default_factory=list, description="Voice names assigned to this track (e.g., ['Soprano', 'Alto'])")
     channel: Optional[int] = Field(None, description="MIDI channel")
     note_count: int = Field(..., description="Number of notes in track")
 
@@ -23,6 +23,7 @@ class PracticeSection(BaseModel):
     start_beat: int = Field(..., ge=1, description="Starting beat")
     end_measure: int = Field(..., ge=1, description="Ending measure")
     end_beat: int = Field(..., ge=1, description="Ending beat")
+    relevant_voices: List[int] = Field(default_factory=list, description="Track numbers this section is relevant for")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -41,6 +42,7 @@ class SongUpdate(BaseModel):
     """Model for updating a song"""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=1000)
+    voices: Optional[List[Voice]] = Field(None, description="Voice configuration for the song")
 
 
 class Song(SongBase):
@@ -91,6 +93,7 @@ class PracticeSectionCreate(BaseModel):
     start_beat: int = Field(..., ge=1)
     end_measure: int = Field(..., ge=1)
     end_beat: int = Field(..., ge=1)
+    relevant_voices: List[int] = Field(default_factory=list, description="Track numbers this section is relevant for")
 
 
 class PracticeSectionUpdate(BaseModel):
@@ -100,3 +103,4 @@ class PracticeSectionUpdate(BaseModel):
     start_beat: Optional[int] = Field(None, ge=1)
     end_measure: Optional[int] = Field(None, ge=1)
     end_beat: Optional[int] = Field(None, ge=1)
+    relevant_voices: Optional[List[int]] = Field(None, description="Track numbers this section is relevant for")

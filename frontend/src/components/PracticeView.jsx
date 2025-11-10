@@ -9,6 +9,8 @@ function PracticeView({ songId, songDetails, onSongUpdate, onDelete, myVoice, de
   const [selectedPracticeSection, setSelectedPracticeSection] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioPlayerState, setAudioPlayerState] = useState(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
 
   // Report audio player state changes to parent
   useEffect(() => {
@@ -16,6 +18,23 @@ function PracticeView({ songId, songDetails, onSongUpdate, onDelete, myVoice, de
       onAudioPlayerStateChange(audioPlayerState);
     }
   }, [audioPlayerState, onAudioPlayerStateChange]);
+
+  const handleSaveTitle = async () => {
+    if (!editedTitle.trim()) {
+      alert('Title cannot be empty');
+      return;
+    }
+    
+    try {
+      const apiClient = (await import('../api/client')).default;
+      await apiClient.put(`/songs/${songId}`, { title: editedTitle });
+      setIsEditingTitle(false);
+      onSongUpdate();
+    } catch (err) {
+      alert('Failed to update title: ' + err.message);
+      console.error('Error updating title:', err);
+    }
+  };
 
   if (!songDetails) {
     return (
@@ -30,7 +49,67 @@ function PracticeView({ songId, songDetails, onSongUpdate, onDelete, myVoice, de
     <div style={{ maxWidth: '1400px' }}>
       {/* Song Header */}
       <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ margin: '0 0 10px 0', fontSize: '32px' }}>{songDetails.title}</h1>
+        {isEditingTitle ? (
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+            <input
+              type="text"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              style={{ 
+                fontSize: '32px', 
+                padding: '5px 10px', 
+                border: '2px solid #007bff',
+                borderRadius: '4px',
+                flex: 1
+              }}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSaveTitle();
+                } else if (e.key === 'Escape') {
+                  setIsEditingTitle(false);
+                }
+              }}
+            />
+            <button
+              onClick={handleSaveTitle}
+              style={{
+                padding: '8px 16px',
+                background: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setIsEditingTitle(false)}
+              style={{
+                padding: '8px 16px',
+                background: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <h1 
+            style={{ margin: '0 0 10px 0', fontSize: '32px', cursor: 'pointer', display: 'inline-block' }}
+            onClick={() => {
+              setEditedTitle(songDetails.title);
+              setIsEditingTitle(true);
+            }}
+            title="Click to edit title"
+          >
+            {songDetails.title} ✏️
+          </h1>
+        )}
         {songDetails.description && (
           <p style={{ color: '#666', fontSize: '16px', margin: 0 }}>{songDetails.description}</p>
         )}
@@ -63,6 +142,7 @@ function PracticeView({ songId, songDetails, onSongUpdate, onDelete, myVoice, de
             <div>
               <PracticeSections 
                 songId={songId}
+                songDetails={songDetails}
                 onSectionSelect={setSelectedPracticeSection}
               />
               

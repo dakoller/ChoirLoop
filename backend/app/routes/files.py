@@ -48,7 +48,7 @@ async def upload_midi(id: UUID, midi_file: UploadFile = File(...)):
                 
                 voices.append(Voice(
                     track_number=i,
-                    name=f"Track {i + 1}",
+                    names=[f"Track {i + 1}"],  # Initialize with default name in list
                     channel=channel,
                     note_count=len(notes)
                 ))

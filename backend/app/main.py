@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from app.routes import songs, health, files, sections
+from app.routes import songs, health, files, sections, mp3
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -34,6 +34,7 @@ app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(songs.router, prefix="/api/songs", tags=["songs"])
 app.include_router(files.router, prefix="/api/songs", tags=["files"])
 app.include_router(sections.router, prefix="/api/songs", tags=["sections"])
+app.include_router(mp3.router, prefix="/api/songs", tags=["mp3"])
 
 # Ensure data directory exists
 DATA_DIR = Path("../data")

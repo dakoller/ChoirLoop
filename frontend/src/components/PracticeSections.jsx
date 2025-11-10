@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api/client';
 
-function PracticeSections({ songId, onSectionSelect }) {
+function PracticeSections({ songId, songDetails, onSectionSelect }) {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,7 +11,8 @@ function PracticeSections({ songId, onSectionSelect }) {
     start_measure: 1,
     start_beat: 1,
     end_measure: 1,
-    end_beat: 1
+    end_beat: 1,
+    relevant_voices: []
   });
 
   useEffect(() => {
@@ -41,7 +42,8 @@ function PracticeSections({ songId, onSectionSelect }) {
         start_measure: 1,
         start_beat: 1,
         end_measure: 1,
-        end_beat: 1
+        end_beat: 1,
+        relevant_voices: []
       });
       setShowForm(false);
       fetchSections();
@@ -165,6 +167,56 @@ function PracticeSections({ songId, onSectionSelect }) {
             </div>
           </div>
 
+          {songDetails?.voices && songDetails.voices.length > 0 && (
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                Relevant for voices (optional)
+              </label>
+              <div style={{ 
+                padding: '10px', 
+                border: '1px solid #ddd', 
+                borderRadius: '4px', 
+                background: '#f9f9f9',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                gap: '8px'
+              }}>
+                {songDetails.voices.map((voice) => {
+                  // Handle both old format (name) and new format (names array)
+                  const voiceNames = voice.names || (voice.name ? [voice.name] : [`Track ${voice.track_number + 1}`]);
+                  const displayName = voiceNames.join('/');
+                  
+                  return (
+                    <label key={voice.track_number} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={newSection.relevant_voices.includes(voice.track_number)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewSection({
+                              ...newSection,
+                              relevant_voices: [...newSection.relevant_voices, voice.track_number]
+                            });
+                          } else {
+                            setNewSection({
+                              ...newSection,
+                              relevant_voices: newSection.relevant_voices.filter(t => t !== voice.track_number)
+                            });
+                          }
+                        }}
+                        style={{ marginRight: '5px' }}
+                      />
+                      {displayName}
+                    </label>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                Select which voices this section is relevant for
+              </div>
+            </div>
+          )}
+
           <button 
             type="submit"
             style={{ padding: '10px 20px', fontSize: '14px', background: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
@@ -191,9 +243,20 @@ function PracticeSections({ songId, onSectionSelect }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ margin: '0 0 8px 0' }}>{section.label}</h4>
-                  <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+                  <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: '#666' }}>
                     Measures {section.start_measure}:{section.start_beat} - {section.end_measure}:{section.end_beat}
                   </p>
+                  {section.relevant_voices && section.relevant_voices.length > 0 && songDetails?.voices && (
+                    <p style={{ margin: 0, fontSize: '12px', color: '#007bff' }}>
+                      🎵 For: {section.relevant_voices.map(trackNum => {
+                        const voice = songDetails.voices.find(v => v.track_number === trackNum);
+                        if (!voice) return `Track ${trackNum}`;
+                        // Handle both old format (name) and new format (names array)
+                        const voiceNames = voice.names || (voice.name ? [voice.name] : [`Track ${trackNum}`]);
+                        return voiceNames.join('/');
+                      }).join(', ')}
+                    </p>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '5px' }}>
                   <button 

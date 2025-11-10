@@ -16,6 +16,8 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
   const [practiceMode, setPracticeMode] = useState('manual'); // 'manual' or 'guided'
   const [guidedStep, setGuidedStep] = useState(1); // 1: focus, 2: together, 3: without me
   const [deeplinkApplied, setDeeplinkApplied] = useState(false);
+  const [generatingMp3, setGeneratingMp3] = useState(false);
+  const [mp3Hash, setMp3Hash] = useState(null);
 
   const synthsRef = useRef([]);
   const partsRef = useRef([]);
@@ -35,6 +37,13 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
       cleanup();
     };
   }, [songId, songDetails?.midi_file]);
+
+  // Pre-build audio when section changes
+  useEffect(() => {
+    if (midiData && !isPlaying) {
+      setupAudio(midiData, selectedSection);
+    }
+  }, [selectedSection, midiData]);
 
   // Apply deeplink settings when MIDI is loaded and settings are available
   useEffect(() => {
@@ -79,22 +88,38 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
   };
 
   const loadMidiFile = async () => {
+    console.log('[AudioPlayer] Starting MIDI load...');
+    const startTime = performance.now();
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log('[AudioPlayer] Fetching MIDI file from:', `${config.getApiServerUrl()}/api/songs/${songId}/midi`);
+      const fetchStart = performance.now();
       const response = await fetch(`${config.getApiServerUrl()}/api/songs/${songId}/midi`);
+      console.log('[AudioPlayer] MIDI fetch took:', (performance.now() - fetchStart).toFixed(2), 'ms');
+      
       if (!response.ok) {
         throw new Error('Failed to load MIDI file');
       }
 
+      console.log('[AudioPlayer] Reading array buffer...');
+      const bufferStart = performance.now();
       const arrayBuffer = await response.arrayBuffer();
+      console.log('[AudioPlayer] Array buffer read took:', (performance.now() - bufferStart).toFixed(2), 'ms');
+      
+      console.log('[AudioPlayer] Parsing MIDI with Tone.js...');
+      const parseStart = performance.now();
       const midi = new Midi(arrayBuffer);
+      console.log('[AudioPlayer] MIDI parsing took:', (performance.now() - parseStart).toFixed(2), 'ms');
+      console.log('[AudioPlayer] MIDI tracks:', midi.tracks.length, 'Duration:', midi.duration, 's');
       
       setMidiData(midi);
       baseTempo.current = midi.header.tempos[0]?.bpm || 120;
+      console.log('[AudioPlayer] Base tempo:', baseTempo.current, 'BPM');
       
       // Initialize volume settings and enabled tracks for each voice
+      console.log('[AudioPlayer] Initializing voice settings for', songDetails.voices.length, 'voices');
       const initialVolumes = {};
       const initialEnabled = {};
       songDetails.voices.forEach((voice) => {
@@ -105,17 +130,24 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
       setEnabledTracks(initialEnabled);
 
       // Setup synths and parts
+      console.log('[AudioPlayer] Setting up audio...');
+      const setupStart = performance.now();
       setupAudio(midi);
+      console.log('[AudioPlayer] Audio setup took:', (performance.now() - setupStart).toFixed(2), 'ms');
       
+      console.log('[AudioPlayer] Total MIDI load time:', (performance.now() - startTime).toFixed(2), 'ms');
       setIsLoading(false);
     } catch (err) {
       setError('Failed to load MIDI: ' + err.message);
-      console.error('MIDI load error:', err);
+      console.error('[AudioPlayer] MIDI load error:', err);
       setIsLoading(false);
     }
   };
 
   const setupAudio = (midi, section = null) => {
+    console.log('[AudioPlayer] setupAudio called, section:', section ? section.label : 'full song');
+    const setupStart = performance.now();
+    
     cleanup();
 
     let startTime = 0;
@@ -125,13 +157,19 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
     if (section) {
       startTime = calculateSectionTime(section.start_measure, section.start_beat);
       endTime = calculateSectionTime(section.end_measure, section.end_beat);
+      console.log('[AudioPlayer] Section times:', startTime, 'to', endTime, 'seconds');
     }
 
+    console.log('[AudioPlayer] Creating synths for', midi.tracks.length, 'tracks');
+    const synthStart = performance.now();
     synthsRef.current = midi.tracks.map(() => {
       const synth = new Tone.PolySynth(Tone.Synth).toDestination();
       return synth;
     });
+    console.log('[AudioPlayer] Synth creation took:', (performance.now() - synthStart).toFixed(2), 'ms');
 
+    console.log('[AudioPlayer] Creating parts...');
+    const partsStart = performance.now();
     partsRef.current = midi.tracks.map((track, trackIndex) => {
       // Filter notes to only include those in the section range
       let notes = track.notes;
@@ -159,6 +197,8 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
 
       return part;
     });
+    console.log('[AudioPlayer] Parts creation took:', (performance.now() - partsStart).toFixed(2), 'ms');
+    console.log('[AudioPlayer] Total setupAudio took:', (performance.now() - setupStart).toFixed(2), 'ms');
   };
 
   const calculateSectionTime = (measure, beat) => {
@@ -212,15 +252,22 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
   };
 
   const handlePlay = async () => {
+    console.log('[AudioPlayer] ▶ Play button clicked');
+    const playStart = performance.now();
+    
     try {
+      console.log('[AudioPlayer] Starting Tone.js audio context...');
+      const toneStart = performance.now();
       await Tone.start();
+      console.log('[AudioPlayer] Tone.start() took:', (performance.now() - toneStart).toFixed(2), 'ms');
+      
+      // Reduce audio latency
+      Tone.context.lookAhead = 0.01; // Reduce from default 0.1 seconds
+      console.log('[AudioPlayer] Audio context lookAhead set to:', Tone.context.lookAhead);
       
       if (!isPlaying) {
-        // Rebuild audio with current section if needed
-        if (selectedSection) {
-          setupAudio(midiData, selectedSection);
-        }
-        
+        console.log('[AudioPlayer] Applying volume settings...');
+        const volumeStart = performance.now();
         // Apply volume settings and mute disabled tracks
         songDetails.voices.forEach((voice) => {
           const isEnabled = enabledTracks[voice.track_number] !== false;
@@ -230,11 +277,15 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
             synthsRef.current[voice.track_number].volume.value = volume;
           }
         });
+        console.log('[AudioPlayer] Volume settings applied, took:', (performance.now() - volumeStart).toFixed(2), 'ms');
 
         // Set tempo
+        console.log('[AudioPlayer] Setting tempo to', tempo, '% =', baseTempo.current * (tempo / 100), 'BPM');
         Tone.Transport.bpm.value = baseTempo.current * (tempo / 100);
 
         // Schedule loops with breaks
+        console.log('[AudioPlayer] Scheduling loops, count:', loopCount);
+        const scheduleStart = performance.now();
         if (loopCount === 0) {
           // Infinite looping - use Tone.js built-in loop
           const beatDuration = 60 / Tone.Transport.bpm.value;
@@ -255,6 +306,7 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
             }, clickTime);
           }
           
+          console.log('[AudioPlayer] Infinite loop mode, count-in duration:', countInDuration, 's');
           partsRef.current.forEach(part => {
             if (part) {
               part.loop = true;
@@ -263,6 +315,7 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
             }
           });
         } else {
+          console.log('[AudioPlayer] Finite loop mode, loops:', loopCount);
           // Finite looping - custom scheduling
           let currentOffset = 0;
           
@@ -291,19 +344,28 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
             handleStop();
           }, totalDuration);
         }
+        console.log('[AudioPlayer] Loop scheduling took:', (performance.now() - scheduleStart).toFixed(2), 'ms');
         
+        console.log('[AudioPlayer] Starting Tone.Transport...');
+        const transportStart = performance.now();
         Tone.Transport.start();
+        console.log('[AudioPlayer] Transport.start() took:', (performance.now() - transportStart).toFixed(2), 'ms');
+        
         setIsPlaying(true);
         setCurrentLoop(1);
         if (onPlayingChange) onPlayingChange(true);
+        
+        console.log('[AudioPlayer] ✅ Total play button to start took:', (performance.now() - playStart).toFixed(2), 'ms');
       } else {
+        console.log('[AudioPlayer] Pausing playback');
         Tone.Transport.pause();
         setIsPlaying(false);
         if (onPlayingChange) onPlayingChange(false);
       }
     } catch (err) {
       setError('Playback error: ' + err.message);
-      console.error('Audio error:', err);
+      console.error('[AudioPlayer] ❌ Audio error:', err);
+      console.log('[AudioPlayer] Error occurred at:', (performance.now() - playStart).toFixed(2), 'ms after play button click');
     }
   };
 
@@ -328,6 +390,45 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
     
     if (synthsRef.current[trackNumber]) {
       synthsRef.current[trackNumber].volume.value = newVolume;
+    }
+  };
+
+  const handleGenerateMp3 = async () => {
+    setGeneratingMp3(true);
+    setError(null);
+    
+    try {
+      const apiClient = (await import('../api/client')).default;
+      
+      const response = await apiClient.post(`/songs/${songId}/generate-mp3`, {
+        tempo,
+        track_volumes: Object.fromEntries(
+          Object.entries(trackVolumes).map(([k, v]) => [String(k), v])
+        ),
+        enabled_tracks: Object.fromEntries(
+          Object.entries(enabledTracks).map(([k, v]) => [String(k), v])
+        ),
+        section_id: selectedSection?.id || null,
+        start_measure: selectedSection?.start_measure || null,
+        start_beat: selectedSection?.start_beat || null,
+        end_measure: selectedSection?.end_measure || null,
+        end_beat: selectedSection?.end_beat || null
+      });
+      
+      setMp3Hash(response.data.settings_hash);
+      alert(response.data.cached ? 'MP3 already exists!' : 'MP3 generated successfully!');
+    } catch (err) {
+      setError('Failed to generate MP3: ' + (err.response?.data?.detail || err.message));
+      console.error('MP3 generation error:', err);
+    } finally {
+      setGeneratingMp3(false);
+    }
+  };
+
+  const handleDownloadMp3 = () => {
+    if (mp3Hash) {
+      const downloadUrl = `${config.getApiServerUrl()}/api/songs/${songId}/download-mp3/${mp3Hash}`;
+      window.open(downloadUrl, '_blank');
     }
   };
 
@@ -742,12 +843,61 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
                   disabled={isPlaying}
                   style={{ width: '16px', height: '16px', cursor: isPlaying ? 'not-allowed' : 'pointer' }}
                 />
-                <span style={{ fontWeight: 'bold', flex: 1 }}>{voice.name}</span>
+                <span style={{ fontWeight: 'bold', flex: 1 }}>
+                  {(voice.names || (voice.name ? [voice.name] : [`Track ${voice.track_number + 1}`])).join('/')}
+                </span>
                 <span style={{ fontSize: '11px', color: '#666' }}>
                   T{voice.track_number + 1}
                 </span>
               </label>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* MP3 Generation Section - Only in Manual Mode */}
+      {practiceMode === 'manual' && (
+        <div style={{ marginTop: '20px', padding: '15px', background: '#fff3cd', borderRadius: '8px', border: '2px solid #ffc107' }}>
+          <h4 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>💿 Generate MP3</h4>
+          <p style={{ margin: '0 0 15px 0', fontSize: '13px', color: '#856404' }}>
+            Create an MP3 file with your current settings (tempo, volumes, enabled tracks, section)
+          </p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleGenerateMp3}
+              disabled={generatingMp3 || isPlaying}
+              style={{
+                flex: 1,
+                padding: '10px 20px',
+                background: '#ffc107',
+                color: '#333',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: generatingMp3 || isPlaying ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold',
+                fontSize: '14px'
+              }}
+            >
+              {generatingMp3 ? '⏳ Generating...' : '🎵 Generate MP3'}
+            </button>
+            {mp3Hash && (
+              <button
+                onClick={handleDownloadMp3}
+                style={{
+                  flex: 1,
+                  padding: '10px 20px',
+                  background: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '14px'
+                }}
+              >
+                ⬇️ Download MP3
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -767,7 +917,7 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
                   }}
                 >
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px' }}>
-                    {voice.name}: {trackVolumes[voice.track_number] ?? -10} dB
+                    {(voice.names || (voice.name ? [voice.name] : [`Track ${voice.track_number + 1}`])).join('/')}: {trackVolumes[voice.track_number] ?? -10} dB
                     {!isEnabled && <span style={{ color: '#999', fontWeight: 'normal' }}> (Off)</span>}
                   </label>
                   <input

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import apiClient from './api/client';
 import Layout from './components/Layout';
 import PracticeView from './components/PracticeView';
+import MyPracticeView from './components/MyPracticeView';
 import DeeplinkDisplay from './components/DeeplinkDisplay';
 import { parseDeeplink } from './utils/deeplink';
 import './App.css';
@@ -15,6 +16,8 @@ function App() {
   const [error, setError] = useState(null);
   const [deeplinkSettings, setDeeplinkSettings] = useState(null);
   const [audioPlayerState, setAudioPlayerState] = useState(null);
+  const [currentView, setCurrentView] = useState('songs');
+  const [allAvailableVoices, setAllAvailableVoices] = useState([]);
 
   useEffect(() => {
     // Check for deeplink parameters
@@ -29,10 +32,25 @@ function App() {
       if (parsedSettings.voiceId) {
         setMyVoice(parsedSettings.voiceId);
       }
+    } else {
+      // Load saved voice from localStorage if no deeplink
+      const savedVoice = localStorage.getItem('choirloop_my_voice');
+      if (savedVoice) {
+        setMyVoice(savedVoice);
+      }
     }
     
     fetchSongs();
   }, []);
+
+  // Save voice selection to localStorage whenever it changes
+  useEffect(() => {
+    if (myVoice) {
+      localStorage.setItem('choirloop_my_voice', myVoice);
+    } else {
+      localStorage.removeItem('choirloop_my_voice');
+    }
+  }, [myVoice]);
 
   useEffect(() => {
     if (selectedSong) {
@@ -48,6 +66,39 @@ function App() {
       const response = await apiClient.get('/songs');
       setSongs(response.data.songs);
       setError(null);
+      
+      // Collect all unique voice names from all songs
+      const voiceNamesSet = new Set();
+      const voicesArray = [];
+      let trackCounter = 0;
+      
+      for (const song of response.data.songs) {
+        try {
+          const songResponse = await apiClient.get(`/songs/${song.id}`);
+          const songData = songResponse.data.song;
+          if (songData.voices && songData.voices.length > 0) {
+            songData.voices.forEach(voice => {
+              // Handle both old format (name) and new format (names array)
+              const voiceNames = voice.names || (voice.name ? [voice.name] : []);
+              voiceNames.forEach(name => {
+                if (!voiceNamesSet.has(name)) {
+                  voiceNamesSet.add(name);
+                  voicesArray.push({
+                    track_number: trackCounter++,  // Unique ID for dropdown
+                    name: name,  // Display name for selector
+                    names: [name],
+                    note_count: voice.note_count,
+                    channel: voice.channel
+                  });
+                }
+              });
+            });
+          }
+        } catch (err) {
+          console.error(`Error fetching song ${song.id}:`, err);
+        }
+      }
+      setAllAvailableVoices(voicesArray);
     } catch (err) {
       setError('Failed to fetch songs: ' + err.message);
       console.error('Error fetching songs:', err);
@@ -97,6 +148,12 @@ function App() {
     }
   };
 
+  const handlePracticeSectionSelect = (songId, section) => {
+    setCurrentView('songs');
+    setSelectedSong(songId);
+    // Wait for song details to load, then the section will be available
+  };
+
   if (loading) {
     return (
       <div style={{ padding: '40px', textAlign: 'center' }}>
@@ -109,11 +166,16 @@ function App() {
     <Layout
       songs={songs}
       selectedSong={selectedSong}
-      onSongSelect={setSelectedSong}
+      onSongSelect={(songId) => {
+        setSelectedSong(songId);
+        setCurrentView('songs');
+      }}
       onCreateSong={handleCreateSong}
       selectedVoice={myVoice}
       onVoiceSelect={setMyVoice}
-      availableVoices={songDetails?.voices}
+      availableVoices={currentView === 'practice' ? allAvailableVoices : (songDetails?.voices || allAvailableVoices)}
+      currentView={currentView}
+      onViewChange={setCurrentView}
     >
       {error && (
         <div style={{ 
@@ -128,15 +190,23 @@ function App() {
         </div>
       )}
 
-      <PracticeView
-        songId={selectedSong}
-        songDetails={songDetails}
-        onSongUpdate={handleSongUpdate}
-        onDelete={handleDeleteSong}
-        myVoice={myVoice}
-        deeplinkSettings={deeplinkSettings}
-        onAudioPlayerStateChange={setAudioPlayerState}
-      />
+      {currentView === 'songs' ? (
+        <PracticeView
+          songId={selectedSong}
+          songDetails={songDetails}
+          onSongUpdate={handleSongUpdate}
+          onDelete={handleDeleteSong}
+          myVoice={myVoice}
+          deeplinkSettings={deeplinkSettings}
+          onAudioPlayerStateChange={setAudioPlayerState}
+        />
+      ) : (
+        <MyPracticeView
+          songs={songs}
+          myVoice={myVoice}
+          onSectionSelect={handlePracticeSectionSelect}
+        />
+      )}
       
       <DeeplinkDisplay 
         songId={selectedSong}

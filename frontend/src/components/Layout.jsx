@@ -8,6 +8,8 @@ function Layout({
   selectedVoice,
   onVoiceSelect,
   availableVoices,
+  currentView,
+  onViewChange,
   children 
 }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -33,7 +35,42 @@ function Layout({
         alignItems: 'center',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>🎵 ChoirLoop</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <h1 style={{ margin: 0, fontSize: '24px' }}>🎵 ChoirLoop</h1>
+          
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => onViewChange && onViewChange('songs')}
+              style={{
+                padding: '8px 16px',
+                background: currentView === 'songs' ? '#0056b3' : 'rgba(255,255,255,0.2)',
+                color: 'white',
+                border: currentView === 'songs' ? '2px solid white' : '2px solid transparent',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '14px'
+              }}
+            >
+              📚 Songs
+            </button>
+            <button
+              onClick={() => onViewChange && onViewChange('practice')}
+              style={{
+                padding: '8px 16px',
+                background: currentView === 'practice' ? '#0056b3' : 'rgba(255,255,255,0.2)',
+                color: 'white',
+                border: currentView === 'practice' ? '2px solid white' : '2px solid transparent',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '14px'
+              }}
+            >
+              🎵 For Practice
+            </button>
+          </div>
+        </div>
         
         {availableVoices && availableVoices.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -51,11 +88,15 @@ function Layout({
               }}
             >
               <option value="">Select your part...</option>
-              {availableVoices.map((voice) => (
-                <option key={voice.track_number} value={voice.track_number}>
-                  {voice.name}
-                </option>
-              ))}
+              {availableVoices.map((voice, index) => {
+                // Handle both old format (name) and new format (names array)
+                const displayName = voice.name || (voice.names && voice.names.length > 0 ? voice.names.join('/') : `Track ${voice.track_number + 1}`);
+                return (
+                  <option key={`${voice.track_number}-${index}`} value={voice.name || displayName}>
+                    {displayName}
+                  </option>
+                );
+              })}
             </select>
           </div>
         )}
