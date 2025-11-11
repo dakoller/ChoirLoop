@@ -1,3 +1,8 @@
+"""
+MP3 generation and download endpoints - TEMPORARILY DISABLED
+This module is currently commented out as MP3/ffmpeg functionality has been disabled.
+"""
+
 # """MP3 generation and download endpoints"""
 # from fastapi import APIRouter, HTTPException, status, BackgroundTasks
 # from fastapi.responses import FileResponse

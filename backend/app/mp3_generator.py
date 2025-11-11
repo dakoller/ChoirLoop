@@ -1,3 +1,8 @@
+"""
+MP3 Generation Service for ChoirLoop - TEMPORARILY DISABLED
+This module is currently commented out as MP3/ffmpeg functionality has been disabled.
+"""
+
 # """
 # MP3 Generation Service for ChoirLoop
 # Converts MIDI files to MP3 with specific voice mix and tempo settings
