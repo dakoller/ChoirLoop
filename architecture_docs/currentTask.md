@@ -1,7 +1,7 @@
 # Current Task
 
 ## Current Objective
-Deeplink feature implementation complete - users can now share practice session configurations via URL.
+Data persistence issue fixed - songs now persist correctly after container restarts.
 
 ## Context
 - Project is a browser-based tool for choir practice with MIDI file support

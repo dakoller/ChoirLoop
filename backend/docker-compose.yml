@@ -14,8 +14,8 @@ services:
     volumes:
       # Mount app code for development
       - ./app:/app/app
-      # Share data directory with host (Laravel backend data)
-      - ../backend/data:/app/data
+      # Persist data directory to host
+      - ./data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
