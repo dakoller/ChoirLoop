@@ -10,7 +10,7 @@ build/
 
 # uv
 .venv/
-uv.lock
+# uv.lock  # Commented out - we need this file for Docker builds
 
 # Environment
 .env
