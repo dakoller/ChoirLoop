@@ -14,13 +14,17 @@ services:
     volumes:
       # Mount app code for development
       - ./app:/app/app
-      # Persist data directory to host
-      - ./data:/app/data
+      # Persist data in Docker named volume
+      - choirloop-data:/app/data
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
     networks:
       - choirloop-network
+
+volumes:
+  choirloop-data:
+    driver: local
 
 networks:
   choirloop-network:

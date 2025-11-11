@@ -2,8 +2,8 @@
 .docker/
 
 # Data (uploaded files, will be managed separately)
-#data/songs/
-#data/index.json
+data/songs/
+data/index.json
 
 # PHP
 vendor/
