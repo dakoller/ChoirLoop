@@ -7,8 +7,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: choirloop-python-api
-    ports:
-      - "8001:8000"
+    expose:
+      - "8000"
     volumes:
       # Mount app code for development
       - ./app:/app/app
