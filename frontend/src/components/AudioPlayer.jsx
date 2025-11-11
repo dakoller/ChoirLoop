@@ -686,7 +686,8 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
 
         {/* Right Column */}
         <div>
-          {/* Practice Mode Selection */}
+          {/* Practice Mode Selection - Temporarily Disabled */}
+          {false && (
           <div style={{ marginBottom: '20px', padding: '15px', background: '#e7f3ff', borderRadius: '8px', border: '2px solid #007bff' }}>
             <h4 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>🎯 Practice Mode</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
@@ -810,6 +811,7 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
 

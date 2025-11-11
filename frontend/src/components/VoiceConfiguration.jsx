@@ -187,6 +187,17 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
     }));
   };
 
+  const handleClearVoices = (trackIndex) => {
+    setVoices(prev => prev.map((voice, idx) => {
+      if (idx !== trackIndex) return voice;
+      
+      return {
+        ...voice,
+        names: []
+      };
+    }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     
@@ -279,13 +290,32 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
 
               {/* Voice Selection - Multi-select */}
               <div>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
-                  Assign to Voice(s): {voice.names && voice.names.length > 0 && (
-                    <span style={{ fontWeight: 'normal', color: '#007bff' }}>
-                      ({voice.names.join(', ')})
-                    </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '500' }}>
+                    Assign to Voice(s): {voice.names && voice.names.length > 0 && (
+                      <span style={{ fontWeight: 'normal', color: '#007bff' }}>
+                        ({voice.names.join(', ')})
+                      </span>
+                    )}
+                  </label>
+                  {voice.names && voice.names.length > 0 && (
+                    <button
+                      onClick={() => handleClearVoices(index)}
+                      style={{
+                        padding: '2px 8px',
+                        fontSize: '11px',
+                        background: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '3px',
+                        cursor: 'pointer'
+                      }}
+                      title="Clear all voice assignments"
+                    >
+                      Clear
+                    </button>
                   )}
-                </label>
+                </div>
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
