@@ -37,9 +37,10 @@ app.include_router(sections.router, prefix="/api/songs", tags=["sections"])
 # app.include_router(mp3.router, prefix="/api/songs", tags=["mp3"])
 
 # Ensure data directory exists
-DATA_DIR = Path("../data")
-DATA_DIR.mkdir(exist_ok=True)
-(DATA_DIR / "songs").mkdir(exist_ok=True)
+# Use absolute path that works in Docker (/app/data) and fallback to relative for local dev
+DATA_DIR = Path("/app/data") if Path("/app/data").exists() or Path("/app").exists() else Path("../data")
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+(DATA_DIR / "songs").mkdir(parents=True, exist_ok=True)
 
 # Create index.json if it doesn't exist
 index_file = DATA_DIR / "index.json"
