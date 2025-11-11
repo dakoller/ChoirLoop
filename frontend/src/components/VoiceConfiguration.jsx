@@ -52,13 +52,25 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
       setIsExpanded(false);
     } else if (midiData) {
       // Initialize from MIDI data - expand by default for new configuration
-      const initialVoices = midiData.tracks.map((track, index) => ({
-        track_number: index,
-        names: [track.name || `Track ${index + 1}`],
-        original_track_name: track.name || `Track ${index + 1}`,
-        note_count: track.notes.length,
-        channel: track.channel
-      }));
+      const initialVoices = midiData.tracks.map((track, index) => {
+        // Clean up track name by removing "Track X, " prefix if present
+        let cleanName = track.name || `Track ${index + 1}`;
+        const trackPrefixPattern = /^Track\s+\d+,\s*/i;
+        cleanName = cleanName.replace(trackPrefixPattern, '').trim();
+        
+        // If cleaning resulted in empty string, use Track number
+        if (!cleanName) {
+          cleanName = `Track ${index + 1}`;
+        }
+        
+        return {
+          track_number: index,
+          names: [cleanName],
+          original_track_name: track.name || `Track ${index + 1}`,
+          note_count: track.notes.length,
+          channel: track.channel
+        };
+      });
       setVoices(initialVoices);
       setIsExpanded(true); // Expand for first-time configuration
     }
