@@ -844,7 +844,7 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
                   style={{ width: '16px', height: '16px', cursor: isPlaying ? 'not-allowed' : 'pointer' }}
                 />
                 <span style={{ fontWeight: 'bold', flex: 1 }}>
-                  {(voice.names || (voice.name ? [voice.name] : [`Track ${voice.track_number + 1}`])).join('/')}
+                  {(voice.names && voice.names.length > 0) ? voice.names.join('/') : `Track ${voice.track_number + 1}`}
                 </span>
                 <span style={{ fontSize: '11px', color: '#666' }}>
                   T{voice.track_number + 1}
@@ -917,7 +917,7 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
                   }}
                 >
                   <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px' }}>
-                    {(voice.names || (voice.name ? [voice.name] : [`Track ${voice.track_number + 1}`])).join('/')}: {trackVolumes[voice.track_number] ?? -10} dB
+                    {(voice.names && voice.names.length > 0) ? voice.names.join('/') : `Track ${voice.track_number + 1}`}: {trackVolumes[voice.track_number] ?? -10} dB
                     {!isEnabled && <span style={{ color: '#999', fontWeight: 'normal' }}> (Off)</span>}
                   </label>
                   <input
