@@ -39,29 +39,40 @@ function VoiceConfiguration({ songId, songDetails, onConfigurationSaved }) {
   }, [songId]);
 
   useEffect(() => {
+    // Function to clean track names
+    const cleanTrackName = (name, trackIndex) => {
+      let cleanName = name;
+      const trackPrefixPattern = /^Track\s+\d+,\s*/i;
+      cleanName = cleanName.replace(trackPrefixPattern, '').trim();
+      
+      // If cleaning resulted in empty string, use Track number
+      if (!cleanName) {
+        cleanName = `Track ${trackIndex + 1}`;
+      }
+      return cleanName;
+    };
+
     // Initialize voices from songDetails if available
     if (songDetails?.voices && songDetails.voices.length > 0) {
-      setVoices(songDetails.voices.map(v => ({
-        track_number: v.track_number,
-        names: v.names || (v.name ? [v.name] : [`Track ${v.track_number + 1}`]),  // Support both old and new format
-        original_track_name: v.original_track_name || `Track ${v.track_number + 1}`,
-        note_count: v.note_count || 0,
-        channel: v.channel
-      })));
+      setVoices(songDetails.voices.map(v => {
+        // Clean the names array
+        let cleanedNames = v.names || (v.name ? [v.name] : [`Track ${v.track_number + 1}`]);
+        cleanedNames = cleanedNames.map(name => cleanTrackName(name, v.track_number));
+        
+        return {
+          track_number: v.track_number,
+          names: cleanedNames,
+          original_track_name: v.original_track_name || `Track ${v.track_number + 1}`,
+          note_count: v.note_count || 0,
+          channel: v.channel
+        };
+      }));
       // Don't auto-expand if voices already configured
       setIsExpanded(false);
     } else if (midiData) {
       // Initialize from MIDI data - expand by default for new configuration
       const initialVoices = midiData.tracks.map((track, index) => {
-        // Clean up track name by removing "Track X, " prefix if present
-        let cleanName = track.name || `Track ${index + 1}`;
-        const trackPrefixPattern = /^Track\s+\d+,\s*/i;
-        cleanName = cleanName.replace(trackPrefixPattern, '').trim();
-        
-        // If cleaning resulted in empty string, use Track number
-        if (!cleanName) {
-          cleanName = `Track ${index + 1}`;
-        }
+        const cleanName = cleanTrackName(track.name || `Track ${index + 1}`, index);
         
         return {
           track_number: index,

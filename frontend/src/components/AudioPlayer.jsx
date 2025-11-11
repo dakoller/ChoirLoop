@@ -855,7 +855,7 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
         </div>
       )}
 
-      {/* MP3 Generation Section - Only in Manual Mode */}
+      {/* MP3 Generation Section - Temporarily Disabled
       {practiceMode === 'manual' && (
         <div style={{ marginTop: '20px', padding: '15px', background: '#fff3cd', borderRadius: '8px', border: '2px solid #ffc107' }}>
           <h4 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>💿 Generate MP3</h4>
@@ -901,6 +901,7 @@ function AudioPlayer({ songId, songDetails, selectedSection, onSectionChange, my
           </div>
         </div>
       )}
+      */}
 
       {/* Voice Volume Controls - Full Width, Only in Manual Mode */}
       {practiceMode === 'manual' && songDetails?.voices && songDetails.voices.length > 0 && (
